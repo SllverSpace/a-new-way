@@ -78,8 +78,12 @@ function update(timestamp) {
     let dix = rect2.x - (rect1.x + nx * 200)
     let diy = rect2.y - (rect1.y + ny * 200)
 
-    rect2.x = rect1.x + nx * 200
-    rect2.y = rect1.y + ny * 200
+    rect2.vx -= dix
+    rect2.vy -= diy
+
+
+    // rect2.x = rect1.x + nx * 200
+    // rect2.y = rect1.y + ny * 200
 
     // rect2.vx += (dix-rect2.vx) * delta
     // rect2.vy += (diy-rect2.vy) * delta
@@ -99,12 +103,12 @@ function update(timestamp) {
     dix = rect1.x - (rect2.x + nx * 200)
     diy = rect1.y - (rect2.y + ny * 200)
 
-    rect1.x = rect2.x + nx * 200
-    rect1.y = rect2.y + ny * 200
+    // rect1.x = rect2.x + nx * 200
+    // rect1.y = rect2.y + ny * 200
 
     
-    // rect1.vx -= dix
-    // rect1.vy -= diy
+    rect1.vx -= dix
+    rect1.vy -= diy
 
     // rect1.vx += (dix-rect1.vx) * delta
     // rect1.vy += (diy-rect1.vy) * delta
