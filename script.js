@@ -25,11 +25,26 @@ function force(r, a, b=0.1) {
 	}
 }
 
+function srand(seed) {
+    seed = Math.sin(seed*100000)*100000
+    seed = Math.abs(seed)
+    const a = 1664525
+    const c = 1013904223
+    const m = 2 ** 32
+
+    seed = (a * seed + c) % m
+    return seed / m
+}
+
 var rect1 = {x: -100, y: 0, vx: 0, vy: 0}
 var rect2 = {x: 100, y: 0, vx: 0, vy: 0}
 var time = 0
-var m1s = 0
-var m2s = 0
+var m1s = Math.PI/4
+var m2s = Math.PI/4
+var p1o = [0, 0]
+var p2o = [0, 0]
+var m1v = 0
+var m2v = 0
 
 function update(timestamp) {
     requestAnimationFrame(update)
@@ -58,13 +73,19 @@ function update(timestamp) {
     if (keys["KeyA"]) {
         rect1.vx -= Math.cos(r1a)*delta*1500
         rect1.vy -= Math.sin(r1a)*delta*1500
-        m1s += delta*25
+        m1v += delta*25
     }
     if (keys["KeyD"]) {
         rect2.vx -= Math.cos(r2a)*delta*1500
         rect2.vy -= Math.sin(r2a)*delta*1500
-        m2s += delta*25
+        m2v += delta*25
     }
+
+    m1v = lerp(m1v, 0, delta*100*(1-0.9))
+    m2v = lerp(m2v, 0, delta*100*(1-0.9))
+
+    m1s += m1v
+    m2s += m2v
 
     rect1.x += rect1.vx * delta
     rect1.y += rect1.vy * delta
@@ -78,12 +99,11 @@ function update(timestamp) {
     let dix = rect2.x - (rect1.x + nx * 200)
     let diy = rect2.y - (rect1.y + ny * 200)
 
-    rect2.vx -= dix
-    rect2.vy -= diy
+    rect2.x = rect1.x + nx * 200
+    rect2.y = rect1.y + ny * 200
 
-
-    // rect2.x = rect1.x + nx * 200
-    // rect2.y = rect1.y + ny * 200
+    // rect2.vx -= dix
+    // rect2.vy -= diy
 
     // rect2.vx += (dix-rect2.vx) * delta
     // rect2.vy += (diy-rect2.vy) * delta
@@ -103,12 +123,15 @@ function update(timestamp) {
     dix = rect1.x - (rect2.x + nx * 200)
     diy = rect1.y - (rect2.y + ny * 200)
 
-    // rect1.x = rect2.x + nx * 200
-    // rect1.y = rect2.y + ny * 200
+    // rect1.vx -= dix
+    // rect1.vy -= diy
+
+    rect1.x = rect2.x + nx * 200
+    rect1.y = rect2.y + ny * 200
 
     
-    rect1.vx -= dix
-    rect1.vy -= diy
+    // rect1.vx -= dix
+    // rect1.vy -= diy
 
     // rect1.vx += (dix-rect1.vx) * delta
     // rect1.vy += (diy-rect1.vy) * delta
@@ -138,6 +161,14 @@ function update(timestamp) {
     // ui.circle(...tsc(rect2.x + rotv2x(0, -50, time), rect2.y + rotv2y(0, -50, time)), 25*camera.zoom, [255, 0, 0, 1])
     // ui.circle(...tsc(rect2.x + rotv2x(-50, -50, time), rect2.y + rotv2y(-50, -50, time)), 25*camera.zoom, [0, 0, 255, 1])
 
+    p1o[0] = lerp(p1o[0], rect1.vx*100*delta, delta*10)
+    p1o[1] = lerp(p1o[1], rect1.vy*100*delta, delta*10)
+    p2o[0] = lerp(p2o[0], rect2.vx*100*delta, delta*10)
+    p2o[1] = lerp(p2o[1], rect2.vy*100*delta, delta*10)
+
+    ui.line(...tsc(rect1.x, rect1.y), ...tsc(rect1.x+p1o[0], rect1.y+p1o[1]), 10*camera.zoom, [0, 0, 255, 0.1])
+    ui.line(...tsc(rect2.x, rect2.y), ...tsc(rect2.x+p2o[0], rect2.y+p2o[1]), 10*camera.zoom, [0, 0, 255, 0.1])
+
     ui.line(...tsc(rect1.x, rect1.y), ...tsc(rect2.x, rect2.y), 10*camera.zoom, [255, 255, 255, 1])
     ui.circle(...tsc(rect1.x, rect1.y), 25*camera.zoom, [255, 255, 255, 1])
     ui.circle(...tsc(rect2.x, rect2.y), 25*camera.zoom, [255, 255, 255, 1])
@@ -147,6 +178,22 @@ function update(timestamp) {
         ui.rect(...tsc(i*150+Math.floor(camera.x/150)*150-(canvas.width/camera.zoom)/2,  500+450), 75*camera.zoom, 1000*camera.zoom, [0, 200, 0, 1])
     }
 
+    let cloudSize = 1000
+
+
+    let lx = canvas.width/cloudSize/camera.zoom+1
+    let ly = canvas.height/cloudSize/camera.zoom+1
+    for (let x = 0; x < lx; x++) {
+        for (let y = 0; y < ly; y++) {
+            if (y+Math.floor(camera.y/cloudSize) > 0) continue
+            let id = x+Math.floor(camera.x/cloudSize)+(y+Math.floor(camera.y/cloudSize))*10000
+            let ox = srand(id*3)*cloudSize
+            let oy = srand(id*3+1)*cloudSize
+            let s = srand(id*3+2)*250
+            // ui.rect(...tsc(x*300+Math.floor(camera.x/300)*300-(canvas.width/camera.zoom)/2+150, y*300+Math.floor(camera.y/300)*300-(canvas.height/camera.zoom)/2+150), 290*camera.zoom, 290*camera.zoom, [225, 0, 0, 0.25])
+            ui.circle(...tsc(x*cloudSize+Math.floor(camera.x/cloudSize)*cloudSize+ox-(canvas.width/camera.zoom)/2, y*cloudSize+Math.floor(camera.y/cloudSize)*cloudSize+oy-(canvas.height/camera.zoom)/2), s*camera.zoom, [225, 225, 225, 1])
+        }
+    }
     
     
     input.updateInput()
